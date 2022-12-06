@@ -42,11 +42,11 @@ query.awaitTermination()
 
 Spark把流数据当成一块一块的批数据处理，
 
-![image-20221108152222559](https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221108152222559.png)
+![image-20221108152222559](pictures/Structured-Streaming/image-20221108152222559.png)
 
 在输入上的查询操作会生成“Result Table”，每个触发器间隔（默认1秒），新的rows会被添加到Input Table，进而来更新Result Table，我们可以把Result Table写到外部sink（即存储）
 
-<img src="https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221108153103084.png" alt="image-20221108153103084" style="zoom:50%;" />
+<img src="pictures/Structured-Streaming/image-20221108153103084.png" alt="image-20221108153103084" style="zoom:50%;" />
 
 “Output”是写到外部存储系统的内容，output可由下面几种模式定义：
 
@@ -301,7 +301,7 @@ spark.sql("select count(*) from updates")
 
 窗口操作类似于分组操作。对于word count，使用一个滑动窗口，这个窗口10分钟count words，5分钟更新数据，下面是过程
 
-![image-20221111120211946](https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221111120211946.png)
+![image-20221111120211946](pictures/Structured-Streaming/image-20221111120211946.png)
 
 用groupBy()和window()实现滑动窗口
 
@@ -321,7 +321,7 @@ val windowedCounts = words.groupBy(
 
 按照数据的event time处理，不是按照到达时间。结构流可以在一个较长的时间里为部分聚合维护中间状态，以使得迟到的数据可以被正确的在对应窗口更新。
 
-<img src="https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221116105445979.png" alt="image-20221116105445979" style="zoom:50%;" />
+<img src="pictures/Structured-Streaming/image-20221116105445979.png" alt="image-20221116105445979" style="zoom:50%;" />
 
 有必要去限制系统积累的在内存中的中间状态的数量 。引入水印，水印可让引擎自动的跟踪数据中的当前event time，自动的尝试清除之前的状态。
 
@@ -343,11 +343,11 @@ val windowedCounts = words
     .count()
 ```
 
-<img src="https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221116114511915.png" alt="image-20221116114511915" style="zoom:50%;" />
+<img src="pictures/Structured-Streaming/image-20221116114511915.png" alt="image-20221116114511915" style="zoom:50%;" />
 
 ##### 时间窗口的类型
 
-![image-20221116185636264](https://github.com/wushuanglie/Spark-Notebook/tree/main/pictures/Structured-Streaming/image-20221116185636264.png)
+![image-20221116185636264](pictures/Structured-Streaming/image-20221116185636264.png)
 
 有三种类型的窗口：
 
