@@ -9,6 +9,13 @@ conf = SparkConf().setAppName(appName).setMaster(master)
 sc = SparkContext(conf=conf)
 ```
 
+```scala
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
+val conf = new SparkConf().setAppName(appName).setMaster(master)
+val sc = new SparkContext(conf)
+```
+
 ##### 弹性数据集（RDDs）
 
 RDD是Spark中的主要数据类型，它是具有容错性的，可以被并行操作的数据集合。
@@ -25,6 +32,9 @@ data = [1,2,3,4,5]
 distData = sc.parallelize(data)
 distData.reduce(lambda x,y:x+y)
 #output 15
+
+val data = Array(1, 2, 3, 4, 5)
+val distData = sc.parallelize(data)
 ```
 
 在sc.parallelize方法中，第二个参数表示分区数，同时也是切分数据的数量。
@@ -60,10 +70,12 @@ distLocalFile = sc.textFile('file:///usr/local/spark-3.3.0/jupyter.log')
 Spark支持的其他数据类型还有：
 
 1. SparkContext.wholeTextFiles：读取目录中的多个小文件，并返回文件名-文件全部内容的数据对。而textFile是一行一行读取数据。
-2. RDD.saveAsPickleFile （序列化）和 RDD.PickleFile（反序列化），将RDD保存为pickled python objects，在picled的序列化中会用到批处理，默认大小是10。
-2. SequenceFile 和 Hadoop Input/Output Formats.
+2. RDD.saveAsPickleFile （序列化）和 RDD.PickleFile（反序列化），将RDD保存为pickled python objects，在picled的序列化中会用到批处理，默认大小是10。（Python）
+3. SequenceFile ,用SparkContext.sequenceFile[K,V]，K和V应该是Writable的子类，一些常用的Writable，可用类似下面形式sequenceFile[Int,String]
+4. 其他的Hadoop InputFormat，用sc.hadoopRDD。对于新的API（org.apache.hadoop.mapreduce）中的InputFormat用sc.newAPIHadoopRDD
+5. RDD.saveAsObjectFile and sc.objectFile，保存RDD为可序列化对象的SequenceFile
 
-**Writable 支持**
+**Writable 支持**（Python）
 
 PySpark SequenceFile 可以从Java加载一个由键值对组成的RDD，将Writable转换成Java基本类型，使用pickle对得到的java对象做pickle操作。当把一个RDD保存到SequenceFile中时，PySpark的操作正好相反。它先unpickle Java对象，然后转换成Writable。下面的Writable会自动转换
 
@@ -80,7 +92,7 @@ PySpark SequenceFile 可以从Java加载一个由键值对组成的RDD，将Writ
 
 数组不能被处理。当写的时候，用户要自定义转换器来将数组转换成自定义的ArrayWritable。当读的时候，转换器将自定义的ArrayWritable转成java Obeject[ ]，然后再picled成Python tuples。 
 
-**保存和加载 SequenceFiles**
+**保存和加载 SequenceFiles**（Python）
 
 输入输出的键值对可以被指令，类似Hadoop。标准Writable不需要。
 
@@ -91,7 +103,7 @@ sorted(sc.sequenceFile("path/to/file").collect())
 #output [(1, u'a'), (2, u'aa'), (3, u'aaa')]
 ```
 
-**（没理解）保存和加载其他 Hadoop Input/Output Formats**
+**保存和加载其他 Hadoop Input/Output Formats**（Python）
 
 ```
 PySpark can also read any Hadoop InputFormat or write any Hadoop OutputFormat, for both ‘new’ and ‘old’ Hadoop MapReduce APIs. If required, a Hadoop configuration can be passed in as a Python dict. Here is an example using the Elasticsearch ESInputFormat:
@@ -128,7 +140,7 @@ RDD有transoformation和action操作。
 
 有三种方法：
 
-1. lambda 表达式
+1. lambda 表达式，匿名函数
 
 2. 定义一个函数：
 
@@ -363,7 +375,7 @@ broadcastVar.value
 
 使用.destroy()方法永久释放所有被广播变量所使用的资源。在这之后广播变量就不能被使用了。
 
-默认情况下这些方法不会阻塞。设置blocking=true，那么会阻塞，知道资源被释放
+默认情况下这些方法不会阻塞。设置blocking=true，那么会阻塞，直到资源被释放
 
 ######  Accumulators
 
@@ -396,5 +408,26 @@ data = sc.parallelize([Vectors.dense([1]),Vectors.dense([1])])
 data.foreach(lambda x:vecAccum.add(x))
 vecAccum.value
 
+```
+
+```scala
+class VectorAccumulatorV2 extends AccumulatorV2[MyVector, MyVector] {
+
+  private val myVector: MyVector = MyVector.createZeroVector
+
+  def reset(): Unit = {
+    myVector.reset()
+  }
+
+  def add(v: MyVector): Unit = {
+    myVector.add(v)
+  }
+  ...
+}
+
+// Then, create an Accumulator of this type:
+val myVectorAcc = new VectorAccumulatorV2
+// Then, register it into spark context:
+sc.register(myVectorAcc, "MyVectorAcc1")
 ```
 
